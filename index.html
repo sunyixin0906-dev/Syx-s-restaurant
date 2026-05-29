@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>syx点餐页面</title>
+<meta property="og:title" content="syx点餐页面"/>
+<meta property="og:description" content="欢迎来我家做客！在线点菜神器～"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB',sans-serif;background:#f0f0f0;display:flex;flex-direction:column;align-items:center;padding:24px 12px 40px}
+h2{color:#555;font-size:.85rem;font-weight:500;margin-bottom:14px;letter-spacing:.5px}
+.app{width:390px;height:844px;position:relative;overflow:hidden;border-radius:32px;box-shadow:0 24px 80px rgba(0,0,0,.2)}
+.page{position:absolute;inset:0;transition:opacity .25s,transform .25s}
+.page.hidden{opacity:0;pointer-events:none;transform:scale(.97)}
+/* 移动端全屏 */
+@media(max-width:480px){
+  body{padding:0;background:#ffeef4}
+  h2{display:none}
+  .app{width:100vw;height:100vh;height:100dvh;border-radius:0;box-shadow:none}
+}
+
+/* ─── 通用 ─── */
+.page-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#fff;border-bottom:1.5px solid #ffd6e7;position:sticky;top:0;z-index:10;box-shadow:0 2px 10px rgba(255,143,171,.08);flex-shrink:0}
+.page-title{font-size:1.05rem;font-weight:800;color:#4a3f5c;letter-spacing:1px}
+.back-btn{background:transparent;border:1.5px solid #ffb3c6;color:#ff8fab;border-radius:50px;padding:5px 14px;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s}
+.back-btn:hover{background:#fff0f3;transform:translateX(-2px)}
+.empty-hint{padding:20px;text-align:center;color:#aaa;font-size:.85rem}
+
+/* ═══ 欢迎页 ═══ */
+#page-welcome{background:linear-gradient(175deg,#ffeef4 0%,#ffd6e7 30%,#ede0ff 70%,#d4eaff 100%);display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;overflow:hidden;box-sizing:border-box;padding:8vh 5vw 5vh}
+.bg-glow1{position:absolute;width:320px;height:320px;background:radial-gradient(circle,rgba(255,143,171,.22) 0%,transparent 70%);top:-80px;left:-60px;pointer-events:none;border-radius:50%}
+.bg-glow2{position:absolute;width:280px;height:280px;background:radial-gradient(circle,rgba(180,140,255,.18) 0%,transparent 70%);bottom:20px;right:-60px;pointer-events:none;border-radius:50%}
+.manage-corner-btn{position:absolute;top:16px;right:16px;z-index:10;background:rgba(255,255,255,.82);backdrop-filter:blur(8px);color:#b5446e;border:1.5px solid rgba(255,143,171,.5);border-radius:50px;padding:7px 16px;font-size:.72rem;font-weight:800;cursor:pointer;transition:all .2s;box-shadow:0 2px 12px rgba(255,143,171,.2)}
+.manage-corner-btn:hover{background:#fff0f3;color:#ff8fab;border-color:#ff8fab;transform:scale(1.06) translateY(-1px)}
+.float-food{position:absolute;font-size:1.5rem;pointer-events:none;z-index:0;opacity:.55;animation:floatFood 5s ease-in-out infinite;filter:drop-shadow(0 2px 4px rgba(0,0,0,.08))}
+.welcome-center{display:flex;flex-direction:column;align-items:center;gap:2.5vw;z-index:2;width:100%}.welcome-content{text-align:center;display:flex;flex-direction:column;align-items:center;gap:2.5vw;width:100%}
+/* 招牌板 */
+
+.sign-top{display:flex;justify-content:center;gap:8px;padding:10px 0 6px;border-bottom:1.5px dashed rgba(255,143,171,.3)}
+.sign-dot{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#ff8fab,#ff6b9d);box-shadow:0 1px 4px rgba(255,107,157,.5);animation:dotPulse 1.6s ease-in-out infinite;display:inline-block}
+.sign-dot:nth-child(2){animation-delay:.3s;background:linear-gradient(135deg,#a78bfa,#7c3aed)}
+.sign-dot:nth-child(3){animation-delay:.6s;background:linear-gradient(135deg,#60c7f8,#3a7bd5)}
+.sign-inner{padding:14px 20px 18px}
+.sign-house-row{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:8px}
+.sign-house-emoji{font-size:18vw;filter:drop-shadow(0 6px 14px rgba(255,143,171,.3));animation:floatBig 3.5s ease-in-out infinite;display:block}
+.sign-stars{display:flex;gap:4px}
+.sign-stars span{font-size:.85rem;animation:starTwinkle 1.8s ease-in-out infinite}
+.sign-title{font-size:6.5vw;font-weight:900;letter-spacing:1.5px;margin:0 0 6px;background:linear-gradient(135deg,#b5446e 0%,#7c3aed 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sign-divider{display:flex;justify-content:center;gap:8px;margin:4px 0 8px;color:rgba(255,143,171,.6);font-size:.8rem}
+.sign-subtitle{font-size:4vw;color:#8a7a9b;margin:0;letter-spacing:.5px;line-height:1.6}
+.heart-anim{display:inline-block;animation:heartBeat 1.2s ease-in-out infinite}
+.sign-chain{display:flex;justify-content:space-around;padding:6px 30px 0;border-top:1.5px dashed rgba(255,143,171,.3)}
+.sign-chain span{width:6px;height:6px;border-radius:50%;background:rgba(255,143,171,.4);display:inline-block}
+/* 气泡 */
+.tip-bubble{width:90vw;box-sizing:border-box;padding:3vw 5vw;font-size:3.5vw;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border:1.5px solid rgba(255,143,171,.3);border-radius:50px;padding:10px 22px;font-size:.85rem;font-weight:700;color:#b5446e;position:relative;box-shadow:0 4px 16px rgba(255,143,171,.12);letter-spacing:.3px;animation:bubblePop .5s ease;max-width:88%;text-align:center}
+.tip-arrow{position:absolute;top:-7px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:7px solid rgba(255,143,171,.3)}
+/* 食物装饰行 */
+.food-row{display:flex;gap:12px;align-items:center}
+.food-row-item{font-size:8vw;animation:foodRowBounce 1.6s ease-in-out infinite;filter:drop-shadow(0 2px 4px rgba(0,0,0,.1))}
+/* 底部按钮 */
+.welcome-btns{display:flex;gap:28px;z-index:2}
+.btn-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+.btn-label{font-size:.75rem;font-weight:700;color:#8a7a9b;letter-spacing:.3px}
+.round-btn{width:38vw;height:38vw;border-radius:50%;border:none;font-size:4.5vw;font-weight:900;cursor:pointer;transition:all .28s cubic-bezier(.34,1.56,.64,1);line-height:1.4;text-align:center;padding:0 10px;position:relative;letter-spacing:.5px}
+.round-btn:hover{transform:translateY(-8px) scale(1.08)}
+.round-btn:active{transform:scale(.94)}
+.btn-order{background:linear-gradient(145deg,#ff8fab,#ff5c8a);color:#fff;box-shadow:0 8px 28px rgba(255,92,138,.45),0 2px 0 rgba(255,255,255,.3) inset}
+.btn-records{background:linear-gradient(145deg,#a78bfa,#7c3aed);color:#fff;box-shadow:0 8px 28px rgba(124,58,237,.35),0 2px 0 rgba(255,255,255,.25) inset}
+.order-badge{position:absolute;top:4px;right:4px;background:#ff4d4f;color:#fff;border-radius:50%;width:20px;height:20px;font-size:.62rem;font-weight:800;display:flex;align-items:center;justify-content:center}
+
+/* ═══ 菜单页 ═══ */
+#page-menu{background:linear-gradient(160deg,#fff5f8,#fce4ec);display:flex;flex-direction:column}
+.cart-btn{background:#fff0f3;border:1.5px solid #ffb3c6;color:#ff8fab;border-radius:50px;padding:5px 14px;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s;position:relative}
+.cart-btn:hover{background:#ff8fab;color:#fff}
+.cart-badge{position:absolute;top:-6px;right:-6px;background:#ff4d4f;color:#fff;border-radius:50%;width:18px;height:18px;font-size:.6rem;font-weight:800;display:flex;align-items:center;justify-content:center}
+.menu-body{display:flex;flex:1;overflow:hidden;height:calc(100% - 57px)}
+.sidebar{width:86px;flex-shrink:0;background:#fff;border-right:1.5px solid #ffd6e7;display:flex;flex-direction:column;padding:10px 0;gap:2px;overflow-y:auto}
+.cat-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 6px;background:transparent;border:none;border-left:3px solid transparent;cursor:pointer;color:#8a7a9b;font-size:.7rem;font-weight:600;transition:all .15s;border-radius:0 10px 10px 0}
+.cat-btn:hover{background:#fff0f3;color:#ff8fab}
+.cat-btn.active{background:linear-gradient(90deg,#fff0f3,#fff5f8);color:#ff8fab;border-left-color:#ff8fab;font-weight:800}
+.cat-emoji{font-size:1.3rem}
+.dish-grid{flex:1;padding:12px;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-content:start}
+.dish-card{background:#fff;border-radius:14px;padding:12px 8px 10px;text-align:center;border:1.5px solid #ffd6e7;transition:all .2s;box-shadow:0 2px 8px rgba(255,143,171,.07)}
+.dish-card:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(255,143,171,.18)}
+.dish-emoji-big{font-size:2.3rem;margin-bottom:5px;min-height:42px;display:flex;align-items:center;justify-content:center}
+.dish-name-sm{font-size:.72rem;font-weight:700;color:#4a3f5c;margin-bottom:3px}
+.spice{font-size:.68rem;min-height:16px;margin-bottom:5px;color:#aaa}
+.dish-counter{display:flex;align-items:center;justify-content:flex-end;gap:4px;min-height:26px}
+.c-btn{width:24px;height:24px;border-radius:50%;border:1.5px solid #ffb3c6;background:#fff0f3;color:#ff8fab;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .13s}
+.c-btn:hover{background:#ffb3c6;color:#fff}
+.c-btn-add{width:24px;height:24px;border-radius:50%;border:none;background:linear-gradient(135deg,#ff8fab,#ff6b9d);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .13s;box-shadow:0 2px 6px rgba(255,143,171,.4)}
+.c-btn-add:hover{transform:scale(1.12)}
+.c-num{font-size:.82rem;font-weight:800;color:#4a3f5c;min-width:18px;text-align:center}
+/* 购物车悬浮条 */
+.cart-bar{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(135deg,#ff8fab,#ff6b9d);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;z-index:20;box-shadow:0 -4px 20px rgba(255,143,171,.3);animation:slideUpBar .25s ease}
+.cart-bar-left{font-size:.88rem;font-weight:700}
+.cart-bar-right{font-size:.82rem;font-weight:600;opacity:.9}
+/* 购物车弹层 */
+.cart-overlay{position:absolute;inset:0;background:rgba(74,63,92,.35);backdrop-filter:blur(4px);z-index:30;display:flex;flex-direction:column;justify-content:flex-end;animation:fadeIn .2s}
+.cart-overlay.hidden{display:none}
+.cart-panel{background:#fff;border-radius:24px 24px 0 0;padding:20px 18px;max-height:72%;overflow-y:auto;box-shadow:0 -8px 40px rgba(74,63,92,.15);border-top:2px solid #ffd6e7;animation:slideUpPanel .25s ease}
+.cart-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cart-panel-header h3{font-size:.98rem;font-weight:800;color:#4a3f5c}
+.close-btn{background:#f5f5f5;border:none;color:#8a7a9b;border-radius:50%;width:28px;height:28px;font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .13s}
+.close-btn:hover{background:#ffd6e7}
+.text-btn{background:transparent;border:none;color:#ff8fab;font-size:.8rem;font-weight:700;cursor:pointer;padding:4px 0}
+.cart-list{margin-bottom:12px}
+.cart-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #fff5f8}
+.cart-item:last-child{border-bottom:none}
+.cart-item-emoji{font-size:1.5rem;flex-shrink:0}
+.cart-item-name{flex:1;font-size:.88rem;font-weight:600;color:#4a3f5c}
+.cart-item-counter{display:flex;align-items:center;gap:6px}
+.checkout-btn{width:100%;padding:13px;border:none;background:linear-gradient(135deg,#ff8fab,#ff6b9d);color:#fff;border-radius:14px;font-size:.93rem;font-weight:800;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(255,143,171,.4);margin-top:6px;letter-spacing:.5px}
+.checkout-btn:hover{transform:translateY(-2px)}
+.checkout-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.checkout-summary{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;padding:12px;background:#fff0f3;border-radius:12px;border:1px solid #ffd6e7}
+.summary-tag{background:#fff;border:1.5px solid #ffd6e7;border-radius:20px;padding:3px 10px;font-size:.72rem;color:#4a3f5c;font-weight:600}
+.checkout-form .form-row{margin-bottom:12px}
+.form-label{display:block;font-size:.76rem;font-weight:700;color:#8a7a9b;margin-bottom:6px}
+.form-input{width:100%;padding:9px 13px;border:1.5px solid #ffd6e7;border-radius:11px;font-size:.88rem;color:#4a3f5c;outline:none;background:#fff0f3;font-family:inherit;transition:border-color .15s}
+.form-input:focus{border-color:#ff8fab;background:#fff}
+.form-input::placeholder{color:#ccc}
+
+/* ═══ 点餐记录 ═══ */
+#page-orders{background:linear-gradient(160deg,#fff5f8,#fce4ec);display:flex;flex-direction:column}
+.orders-body{flex:1;padding:14px 16px;overflow-y:auto}
+.orders-empty{text-align:center;padding:60px 20px;color:#aaa}
+.orders-empty-emoji{font-size:4rem;margin-bottom:12px;animation:floatBig 3.5s ease-in-out infinite}
+.order-card{background:#fff;border-radius:18px;border:1.5px solid #ffd6e7;margin-bottom:12px;overflow:hidden;box-shadow:0 3px 14px rgba(255,143,171,.09);cursor:pointer;transition:all .2s}
+.order-card:hover{box-shadow:0 6px 22px rgba(255,143,171,.18);transform:translateY(-1px)}
+.order-card.expanded{border-color:#ffb3c6;box-shadow:0 6px 28px rgba(255,143,171,.2)}
+.order-card-header{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:linear-gradient(90deg,#fff0f3,#fff5f8);border-bottom:1px solid #ffd6e7}
+.order-meta{display:flex;flex-direction:column;gap:2px}
+.order-time{font-size:.7rem;color:#8a7a9b}
+.order-person{font-size:.88rem;font-weight:800;color:#4a3f5c}
+.order-arrow{color:#ff8fab;font-size:.65rem}
+.order-dish-row{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px}
+.order-dish-tag{background:#fff0f3;border:1.5px solid #ffd6e7;border-radius:20px;padding:3px 9px;font-size:.74rem;color:#4a3f5c;font-weight:600}
+.order-dish-count{color:#ff8fab;font-weight:800;margin-left:2px}
+.order-detail{padding:0 16px 14px;border-top:1px dashed #ffd6e7;margin-top:4px;animation:fadeIn .18s}
+.order-detail-section{margin-top:12px}
+.order-detail-label{font-size:.76rem;font-weight:800;color:#ff8fab;display:block;margin-bottom:8px}
+.order-detail-list{display:flex;flex-direction:column;gap:5px}
+.order-detail-item{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#fff0f3;border-radius:10px;font-size:.82rem;color:#4a3f5c}
+.order-detail-count{font-weight:800;color:#ff8fab}
+.order-restrict-row{display:flex;align-items:baseline;gap:6px;margin-top:10px;padding:8px 10px;background:#fffbe6;border-radius:10px;border:1px solid #ffe58f}
+.order-restrict-label{font-size:.74rem;font-weight:700;color:#d48806;flex-shrink:0}
+.order-restrict-val{font-size:.8rem;color:#7c5900}
+
+/* ═══ 管理页 ═══ */
+#page-manage{background:linear-gradient(160deg,#fff5f8,#fce4ec);display:flex;flex-direction:column}
+.add-btn{background:linear-gradient(135deg,#ff8fab,#ff6b9d);color:#fff;border:none;border-radius:50px;padding:6px 16px;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 2px 10px rgba(255,143,171,.4)}
+.add-btn:hover{transform:translateY(-2px)}
+.manage-body{flex:1;overflow-y:auto;padding:14px 16px}
+.manage-section{background:#fff;border-radius:18px;border:1.5px solid #ffd6e7;margin-bottom:14px;overflow:hidden;box-shadow:0 4px 18px rgba(255,143,171,.09)}
+.manage-cat-title{display:flex;align-items:center;gap:7px;padding:11px 16px;background:linear-gradient(90deg,#fff0f3,#ffd6e7);font-size:.93rem;font-weight:800;color:#4a3f5c;border-bottom:1px solid #ffd6e7}
+.cat-count{margin-left:auto;background:#ffb3c6;color:#fff;border-radius:20px;padding:1px 9px;font-size:.7rem;font-weight:700}
+.manage-list{padding:4px 0}
+.manage-item{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid #fff5f8;transition:background .12s}
+.manage-item:last-child{border-bottom:none}
+.manage-item:hover{background:#fff5f8}
+.m-emoji{font-size:1.5rem;width:30px;text-align:center;flex-shrink:0}
+.m-name{flex:1;font-size:.86rem;font-weight:600;color:#4a3f5c}
+.m-spice{width:52px;text-align:center;font-size:.7rem}
+.m-actions{display:flex;gap:5px;flex-shrink:0}
+.edit-btn{background:#fff0f3;color:#ff8fab;border:1.5px solid #ffb3c6;border-radius:20px;padding:3px 9px;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .12s}
+.edit-btn:hover{background:#ffb3c6;color:#fff}
+.del-btn{background:#fff5f5;color:#ff4d4f;border:1.5px solid #ffccc7;border-radius:20px;padding:3px 9px;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .12s}
+.del-btn:hover{background:#ff4d4f;color:#fff}
+/* 弹窗 */
+.modal-overlay{position:absolute;inset:0;background:rgba(74,63,92,.38);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;animation:fadeIn .2s}
+.modal-overlay.hidden{display:none}
+.modal{background:#fff;border-radius:22px;padding:24px 20px;width:100%;max-height:88%;overflow-y:auto;box-shadow:0 16px 56px rgba(74,63,92,.2);border:2px solid #ffd6e7;animation:slideUp .22s ease}
+.modal-title{font-size:1.05rem;font-weight:800;color:#4a3f5c;text-align:center;margin-bottom:18px}
+.upload-area{width:100%;height:90px;border:2px dashed #ffb3c6;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#fff0f3;transition:all .18s;flex-direction:column;gap:4px;color:#8a7a9b;font-size:.76rem}
+.upload-area:hover{border-color:#ff8fab;background:#fff}
+.upload-icon{font-size:1.7rem}
+.chip-group{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:5px 12px;border-radius:50px;border:1.5px solid #ffd6e7;background:#fff0f3;color:#8a7a9b;font-size:.74rem;font-weight:600;cursor:pointer;transition:all .13s}
+.chip:hover{border-color:#ff8fab;color:#ff8fab}
+.chip.active{background:linear-gradient(135deg,#ff8fab,#ffb3c6);color:#fff;border-color:#ff8fab;box-shadow:0 2px 8px rgba(255,143,171,.4)}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1.5px solid #ffd6e7}
+.cancel-btn{padding:9px 18px;border-radius:50px;border:1.5px solid #ffd6e7;background:#fff0f3;color:#8a7a9b;font-size:.84rem;font-weight:700;cursor:pointer;transition:all .13s}
+.cancel-btn:hover{background:#ffd6e7}
+.save-btn{padding:9px 22px;border-radius:50px;border:none;background:linear-gradient(135deg,#ff8fab,#ff6b9d);color:#fff;font-size:.84rem;font-weight:800;cursor:pointer;transition:all .18s;box-shadow:0 3px 12px rgba(255,143,171,.4)}
+.save-btn:hover:not(:disabled){transform:translateY(-2px)}
+.save-btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ═══ 动画 ═══ */
+@keyframes floatBig{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-14px) rotate(2deg)}}
+@keyframes floatFood{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-18px) rotate(3deg)}}
+@keyframes signBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes dotPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
+@keyframes starTwinkle{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.7);opacity:.5}}
+@keyframes heartBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+@keyframes foodRowBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes bubblePop{0%{transform:scale(.8);opacity:0}80%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes slideUpBar{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes slideUpPanel{from{transform:translateY(60%);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>
+</head>
+<body>
+<h2>📱 小厨房点餐 · 交互预览</h2>
+<div class="app">
+
+  <!-- ══ 欢迎页 ══ -->
+  <div class="page" id="page-welcome">
+    <button class="manage-corner-btn" onclick="showPage('manage')">🍳 学新菜啦？</button>
+    <span class="float-food" style="top:8%;left:6%;animation-delay:0s">🍗</span>
+    <span class="float-food" style="top:14%;left:82%;animation-delay:1.2s">🥦</span>
+    <span class="float-food" style="top:72%;left:5%;animation-delay:0.6s">🍜</span>
+    <span class="float-food" style="top:78%;left:78%;animation-delay:1.8s">🍰</span>
+    <span class="float-food" style="top:40%;left:2%;animation-delay:2.4s">🥢</span>
+    <span class="float-food" style="top:52%;left:88%;animation-delay:0.9s">🍅</span>
+    <span class="float-food" style="top:22%;left:44%;animation-delay:3.0s">🌶️</span>
+    <span class="float-food" style="top:86%;left:35%;animation-delay:1.5s">🧄</span>
+    <span class="float-food" style="top:60%;left:55%;animation-delay:2.1s">🥕</span>
+    <span class="float-food" style="top:30%;left:18%;animation-delay:0.3s">🫕</span>
+    <div class="bg-glow1"></div>
+    <div class="bg-glow2"></div>
+    <div class="welcome-center">
+    <div class="welcome-content">
+      <div class="sign-board">
+        <div class="sign-top">
+          <span class="sign-dot"></span>
+          <span class="sign-dot"></span>
+          <span class="sign-dot"></span>
+        </div>
+        <div class="sign-inner">
+          <div class="sign-house-row">
+            <span class="sign-house-emoji">🏡</span>
+            <div class="sign-stars">
+              <span style="animation-delay:0s">⭐</span>
+              <span style="animation-delay:.3s">⭐</span>
+              <span style="animation-delay:.6s">⭐</span>
+              <span style="animation-delay:.9s">⭐</span>
+              <span style="animation-delay:1.2s">⭐</span>
+            </div>
+          </div>
+          <h1 class="sign-title">欢迎来我家做客！</h1>
+          <div class="sign-divider">✦✦✦</div>
+          <p class="sign-subtitle">今天想吃点什么呢？<span class="heart-anim">🥰</span></p>
+        </div>
+        <div class="sign-chain"><span></span><span></span><span></span><span></span></div>
+      </div>
+      <div class="tip-bubble"><span class="tip-arrow"></span>挑好菜告诉我，我来下厨啦～ 点右边按钮开始点菜吧 👉</div>
+      <div class="food-row">
+        <span class="food-row-item" style="animation-delay:0s">🥢</span>
+        <span class="food-row-item" style="animation-delay:.2s">🍲</span>
+        <span class="food-row-item" style="animation-delay:.4s">🫕</span>
+        <span class="food-row-item" style="animation-delay:.6s">🥘</span>
+        <span class="food-row-item" style="animation-delay:.8s">🍱</span>
+      </div>
+    </div>
+    <div class="welcome-btns">
+      <div class="btn-wrap">
+        <button class="round-btn btn-records" id="btn-records" onclick="showPage('orders')">点餐记录</button>
+        <span class="btn-label">查看记录</span>
+      </div>
+      <div class="btn-wrap">
+        <button class="round-btn btn-order" onclick="showPage('menu')">请点菜！</button>
+        <span class="btn-label">开始点餐</span>
+      </div>
+    </div>
+    </div><!-- /welcome-center -->
+  </div>
+
+  <!-- ══ 菜单页 ══ -->
+  <div class="page hidden" id="page-menu">
+    <div class="page-header">
+      <button class="back-btn" onclick="showPage('welcome')">← 返回</button>
+      <span class="page-title">🍽️ 今日菜单</span>
+      <button class="cart-btn" id="cart-btn" onclick="openCart()">🛒</button>
+    </div>
+    <div class="menu-body">
+      <div class="sidebar" id="sidebar"></div>
+      <div class="dish-grid" id="dish-grid"></div>
+    </div>
+    <div class="cart-bar hidden" id="cart-bar" onclick="openCart()">
+      <span class="cart-bar-left" id="cart-bar-text">🛒 已选 0 道菜</span>
+      <span class="cart-bar-right">查看购物车 →</span>
+    </div>
+    <!-- 购物车弹层 -->
+    <div class="cart-overlay hidden" id="cart-overlay">
+      <div class="cart-panel" id="cart-panel"></div>
+    </div>
+  </div>
+
+  <!-- ══ 点餐记录 ══ -->
+  <div class="page hidden" id="page-orders">
+    <div class="page-header">
+      <button class="back-btn" onclick="showPage('welcome')">← 返回</button>
+      <span class="page-title">📋 点餐记录</span>
+      <span></span>
+    </div>
+    <div class="orders-body" id="orders-body"></div>
+  </div>
+
+  <!-- ══ 管理页 ══ -->
+  <div class="page hidden" id="page-manage">
+    <div class="page-header">
+      <button class="back-btn" onclick="showPage('welcome')">← 返回</button>
+      <span class="page-title">🧑‍🍳 菜品管理</span>
+      <button class="add-btn" onclick="openAddModal()">+ 添加</button>
+    </div>
+    <div class="manage-body" id="manage-body"></div>
+    <div class="modal-overlay hidden" id="modal">
+      <div class="modal">
+        <h3 class="modal-title" id="modal-title">🍳 添加新菜品</h3>
+        <div style="margin-bottom:14px">
+          <label class="form-label">菜品图片</label>
+          <div class="upload-area" onclick="document.getElementById('file-inp').click()"><span class="upload-icon">📷</span><span>点击上传图片</span></div>
+          <input type="file" id="file-inp" accept="image/*" style="display:none" onchange="handleImg(event)">
+        </div>
+        <div style="margin-bottom:14px"><label class="form-label">或输入 Emoji</label><input class="form-input" id="inp-emoji" type="text" placeholder="如 🍗" oninput="updateEmoji()"></div>
+        <div style="margin-bottom:14px"><label class="form-label">菜品名字 *</label><input class="form-input" id="inp-name" type="text" placeholder="请输入菜品名称" oninput="checkSave()"></div>
+        <div style="margin-bottom:14px"><label class="form-label">分类</label><div class="chip-group" id="cat-chips"></div></div>
+        <div style="margin-bottom:14px"><label class="form-label">辣度</label><div class="chip-group" id="spice-chips"></div></div>
+        <div class="modal-footer">
+          <button class="cancel-btn" onclick="closeModal()">取消</button>
+          <button class="save-btn" id="save-btn" onclick="saveDish()">添加菜品</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── 数据 ──
+const CATS=['荤菜','素菜','汤品','甜点','主食'];
+const CATE={荤菜:'🥩',素菜:'🥬',汤品:'🍜',甜点:'🍰',主食:'🍚'};
+const SP=['不辣','🌶️','🌶️🌶️','🌶️🌶️🌶️'];
+let dishes=[
+  // 荤菜·鸡翅组
+  {id:1,name:'可乐鸡翅',cat:'荤菜',sp:0,e:'🍗'},{id:2,name:'江西辣炒鸡翅',cat:'荤菜',sp:3,e:'🍗'},
+  {id:3,name:'椒麻鸡翅',cat:'荤菜',sp:2,e:'🍗'},{id:4,name:'香酥辣鸡翅',cat:'荤菜',sp:2,e:'🍗'},
+  {id:5,name:'焦糖蚝油鸡翅',cat:'荤菜',sp:0,e:'🍗'},
+  // 荤菜·鸡肉组
+  {id:6,name:'宫保鸡丁',cat:'荤菜',sp:2,e:'🍗'},{id:7,name:'辣子鸡',cat:'荤菜',sp:3,e:'🌶️'},
+  {id:8,name:'柠檬香煎鸡',cat:'荤菜',sp:0,e:'🍋'},{id:9,name:'火锅鸡',cat:'荤菜',sp:2,e:'🫕'},
+  {id:10,name:'农家小炒鸡',cat:'荤菜',sp:1,e:'🍗'},{id:11,name:'小炒鸡腿肉',cat:'荤菜',sp:1,e:'🍗'},
+  {id:12,name:'三杯鸡',cat:'荤菜',sp:1,e:'🍗'},{id:13,name:'黄焖鸡',cat:'荤菜',sp:1,e:'🍗'},
+  {id:14,name:'蒜香黄油脆皮鸡',cat:'荤菜',sp:0,e:'🧄'},{id:15,name:'蜂蜜酱油鸡',cat:'荤菜',sp:0,e:'🍯'},
+  {id:16,name:'农家一碗香',cat:'荤菜',sp:1,e:'🍲'},
+  // 荤菜·排骨组
+  {id:17,name:'糖醋排骨',cat:'荤菜',sp:0,e:'🍖'},{id:18,name:'茶香排骨',cat:'荤菜',sp:0,e:'🍖'},
+  {id:19,name:'椒盐排骨',cat:'荤菜',sp:1,e:'🍖'},
+  // 荤菜·猪肉组
+  {id:20,name:'辣椒炒肉',cat:'荤菜',sp:2,e:'🌶️'},{id:21,name:'锅包肉',cat:'荤菜',sp:0,e:'🥩'},
+  {id:22,name:'糖醋里脊',cat:'荤菜',sp:0,e:'🥩'},{id:23,name:'水煮肉片',cat:'荤菜',sp:2,e:'🥩'},
+  {id:24,name:'菠萝咕咾肉',cat:'荤菜',sp:0,e:'🍍'},
+  // 荤菜·其他
+  {id:25,name:'小炒黄牛肉',cat:'荤菜',sp:1,e:'🥩'},{id:26,name:'茄汁大虾',cat:'荤菜',sp:0,e:'🍤'},
+  {id:27,name:'糖醋荷包蛋',cat:'荤菜',sp:0,e:'🥚'},{id:28,name:'金钱蛋',cat:'荤菜',sp:0,e:'🥚'},
+  {id:29,name:'赛螃蟹',cat:'荤菜',sp:0,e:'🦀'},{id:30,name:'寿喜锅',cat:'荤菜',sp:0,e:'🍲'},
+  // 素菜·蛋类
+  {id:31,name:'番茄炒蛋',cat:'素菜',sp:0,e:'🍅'},{id:32,name:'菠菜炒蛋',cat:'素菜',sp:0,e:'🥬'},
+  {id:33,name:'葱爆鸡蛋',cat:'素菜',sp:0,e:'🥚'},
+  // 素菜·豆腐组
+  {id:34,name:'麻婆豆腐',cat:'素菜',sp:2,e:'🫒'},{id:35,name:'浇汁豆腐',cat:'素菜',sp:0,e:'🫒'},
+  {id:36,name:'香煎豆腐',cat:'素菜',sp:0,e:'🫒'},{id:37,name:'茄汁豆腐',cat:'素菜',sp:0,e:'🫒'},
+  // 素菜·菌菇组
+  {id:38,name:'孜然金针菇',cat:'素菜',sp:1,e:'🍄'},{id:39,name:'孜然蘑菇',cat:'素菜',sp:1,e:'🍄'},
+  // 素菜·茄藕组
+  {id:40,name:'地三鲜',cat:'素菜',sp:0,e:'🍆'},{id:41,name:'风味茄子',cat:'素菜',sp:1,e:'🍆'},
+  {id:42,name:'风味藕片',cat:'素菜',sp:1,e:'🪷'},
+  // 素菜·绿叶菜组
+  {id:43,name:'蒜蓉西兰花',cat:'素菜',sp:0,e:'🥦'},{id:44,name:'干煸手撕花菜',cat:'素菜',sp:1,e:'🥦'},
+  {id:45,name:'爆炒娃娃菜',cat:'素菜',sp:0,e:'🥬'},{id:46,name:'蚝油生菜',cat:'素菜',sp:0,e:'🥬'},
+  {id:47,name:'炒芹菜',cat:'素菜',sp:0,e:'🌿'},{id:48,name:'包菜炒粉丝',cat:'素菜',sp:0,e:'🥬'},
+  // 素菜·其他
+  {id:49,name:'虎皮青椒',cat:'素菜',sp:2,e:'🫑'},{id:50,name:'凉拌黄瓜',cat:'素菜',sp:1,e:'🥒'},
+  {id:51,name:'炝拌土豆丝',cat:'素菜',sp:1,e:'🥔'},
+  // 汤品·蛋汤组
+  {id:52,name:'番茄蛋汤',cat:'汤品',sp:0,e:'🍅'},{id:53,name:'丝瓜鸡蛋汤',cat:'汤品',sp:0,e:'🥒'},
+  // 汤品·特色汤
+  {id:54,name:'排骨藕汤',cat:'汤品',sp:0,e:'🦴'},{id:55,name:'酸辣汤',cat:'汤品',sp:2,e:'🍲'},
+  {id:56,name:'三鲜汤',cat:'汤品',sp:0,e:'🍲'},{id:57,name:'上汤娃娃菜',cat:'汤品',sp:0,e:'🥬'},
+  {id:58,name:'玉米冬瓜汤',cat:'汤品',sp:0,e:'🌽'},{id:59,name:'紫菜虾皮汤',cat:'汤品',sp:0,e:'🌊'},
+  // 汤品·粥类
+  {id:60,name:'大米粥',cat:'汤品',sp:0,e:'🍚'},{id:61,name:'小米南瓜粥',cat:'汤品',sp:0,e:'🎃'},
+  {id:62,name:'绿豆粥',cat:'汤品',sp:0,e:'🫘'},{id:63,name:'小米红枣粥',cat:'汤品',sp:0,e:'🌾'},
+  // 甜点
+  {id:64,name:'拔丝地瓜',cat:'甜点',sp:0,e:'🍠'},{id:65,name:'蛋挞',cat:'甜点',sp:0,e:'🥮'},
+  {id:66,name:'空心红糖饼',cat:'甜点',sp:0,e:'🫓'},{id:67,name:'话梅菠萝冰',cat:'甜点',sp:0,e:'🍍'},
+  {id:68,name:'话梅小彩茄',cat:'甜点',sp:0,e:'🍆'},
+  // 主食
+  {id:69,name:'米饭',cat:'主食',sp:0,e:'🍚'},{id:70,name:'面条',cat:'主食',sp:0,e:'🍜'},
+  {id:71,name:'番茄肥牛烩饭',cat:'主食',sp:0,e:'🍅'},{id:72,name:'蛋炒饭',cat:'主食',sp:0,e:'🍳'},
+  {id:73,name:'番茄浓汤面',cat:'主食',sp:0,e:'🍅'},{id:74,name:'照烧肥牛饭',cat:'主食',sp:0,e:'🥩'},
+  {id:75,name:'肥牛滑蛋盖饭',cat:'主食',sp:0,e:'🥩'},
+];
+let nextId=76, activeCat='荤菜', cart=[], orders=[];
+let editingId=null, fCat='荤菜', fSp=0, imgUrl='';
+let cartStep=0; // 0=cart list, 1=checkout
+
+function pad(n){return String(n).padStart(2,'0')}
+function now(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`}
+function isImg(s){return s&&(s.startsWith('data:')||s.startsWith('http'))}
+
+// ── 页面切换 ──
+function showPage(name){
+  ['welcome','menu','manage','orders'].forEach(p=>document.getElementById('page-'+p).classList.toggle('hidden',p!==name));
+  if(name==='menu'){activeCat='荤菜';renderMenu()}
+  if(name==='manage')renderManage();
+  if(name==='orders')renderOrders();
+  if(name==='welcome')updateBadge();
+}
+
+function todayStr(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
+function updateBadge(){
+  const btn=document.getElementById('btn-records');
+  const existing=btn.querySelector('.order-badge');
+  if(existing)existing.remove();
+  const todayCount=orders.filter(o=>o.time.slice(0,10)===todayStr()).length;
+  if(todayCount>0){
+    const b=document.createElement('span');b.className='order-badge';b.textContent=todayCount;btn.appendChild(b);
+  }
+}
+
+// ── 菜单 ──
+function renderMenu(){
+  document.getElementById('sidebar').innerHTML=CATS.map(c=>`
+    <button class="cat-btn${c===activeCat?' active':''}" onclick="switchCat('${c}')">
+      <span class="cat-emoji">${CATE[c]}</span><span>${c}</span></button>`).join('');
+  const list=dishes.filter(d=>d.cat===activeCat);
+  document.getElementById('dish-grid').innerHTML=list.length?list.map(d=>{
+    const cnt=cart.find(i=>i.id===d.id)?.count||0;
+    return `<div class="dish-card">
+      <div class="dish-emoji-big">${isImg(d.e)?`<img src="${d.e}" style="width:38px;height:38px;border-radius:8px;object-fit:cover">`:d.e}</div>
+      <div class="dish-name-sm">${d.name}</div>
+      <div class="spice">${d.sp===0?'不辣':SP[d.sp]}</div>
+      <div class="dish-counter">
+        ${cnt>0?`<button class="c-btn" onclick="rmCart(${d.id})">−</button><span class="c-num">${cnt}</span>`:'<span></span>'}
+        <button class="c-btn-add" onclick="addCart(${d.id})">+</button>
+      </div></div>`;
+  }).join(''):'<div class="empty-hint">该分类暂无菜品～</div>';
+  updateCartBar();
+}
+function switchCat(c){activeCat=c;renderMenu()}
+function addCart(id){
+  const d=dishes.find(x=>x.id===id);if(!d)return;
+  const ex=cart.find(i=>i.id===id);
+  if(ex)ex.count++;else cart.push({id,name:d.name,emoji:d.e,count:1});
+  renderMenu();
+}
+function rmCart(id){
+  const ex=cart.find(i=>i.id===id);if(!ex)return;
+  if(ex.count===1)cart=cart.filter(i=>i.id!==id);else ex.count--;
+  renderMenu();
+}
+function totalCount(){return cart.reduce((s,i)=>s+i.count,0)}
+function updateCartBar(){
+  const bar=document.getElementById('cart-bar');
+  const cnt=totalCount();
+  if(cnt>0){bar.classList.remove('hidden');document.getElementById('cart-bar-text').textContent=`🛒 已选 ${cnt} 道菜`;}
+  else bar.classList.add('hidden');
+  const btn=document.getElementById('cart-btn');
+  const ex=btn.querySelector('.cart-badge');if(ex)ex.remove();
+  if(cnt>0){const b=document.createElement('span');b.className='cart-badge';b.textContent=cnt;btn.appendChild(b);}
+}
+function openCart(){
+  cartStep=0;
+  document.getElementById('cart-overlay').classList.remove('hidden');
+  renderCartPanel();
+}
+function closeCartOverlay(){document.getElementById('cart-overlay').classList.add('hidden')}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('cart-overlay').addEventListener('click',function(e){if(e.target===this)closeCartOverlay();});
+});
+function renderCartPanel(){
+  const panel=document.getElementById('cart-panel');
+  if(cartStep===0){
+    panel.innerHTML=`
+      <div class="cart-panel-header"><h3>🛒 我的菜单</h3><button class="close-btn" onclick="closeCartOverlay()">✕</button></div>
+      ${cart.length===0?'<div class="empty-hint">还没有选菜哦～</div>':`
+        <div class="cart-list">${cart.map(i=>`
+          <div class="cart-item">
+            <span class="cart-item-emoji">${isImg(i.emoji)?`<img src="${i.emoji}" style="width:28px;height:28px;border-radius:7px;object-fit:cover">`:i.emoji}</span>
+            <span class="cart-item-name">${i.name}</span>
+            <div class="cart-item-counter">
+              <button class="c-btn" onclick="rmCart(${i.id});renderCartPanel()">−</button>
+              <span class="c-num">${i.count}</span>
+              <button class="c-btn-add" onclick="addCart(${i.id});renderCartPanel()">+</button>
+            </div></div>`).join('')}</div>
+        <button class="checkout-btn" onclick="cartStep=1;renderCartPanel()">去提交点餐 →</button>`}`;
+  } else {
+    panel.innerHTML=`
+      <div class="cart-panel-header">
+        <button class="text-btn" onclick="cartStep=0;renderCartPanel()">← 返回</button>
+        <h3>📝 填写信息</h3>
+        <button class="close-btn" onclick="closeCartOverlay()">✕</button>
+      </div>
+      <div class="checkout-summary">${cart.map(i=>`<span class="summary-tag">${isImg(i.emoji)?'🍽️':i.emoji} ${i.name} ×${i.count}</span>`).join('')}</div>
+      <div class="checkout-form">
+        <div class="form-row"><label class="form-label">点餐人 *</label><input class="form-input" id="person-inp" type="text" placeholder="请输入你的名字" oninput="checkOrderBtn()"></div>
+        <div class="form-row"><label class="form-label">有无忌口？</label><input class="form-input" id="restrict-inp" type="text" placeholder="如：不吃辣、不吃香菜（没有可不填）"></div>
+      </div>
+      <button class="checkout-btn" id="order-submit-btn" onclick="submitOrder()" disabled>✅ 提交点餐！</button>`;
+  }
+}
+function checkOrderBtn(){
+  const btn=document.getElementById('order-submit-btn');
+  if(btn)btn.disabled=!document.getElementById('person-inp').value.trim();
+}
+function submitOrder(){
+  const person=document.getElementById('person-inp').value.trim();
+  const restrict=document.getElementById('restrict-inp').value.trim()||'无';
+  if(!person)return;
+  orders.push({id:Date.now(),time:now(),person,items:cart.map(i=>({...i})),restrictions:restrict});
+  cart=[];
+  closeCartOverlay();
+  updateCartBar();
+  showPage('welcome');
+}
+
+// ── 点餐记录 ──
+function renderOrders(){
+  const body=document.getElementById('orders-body');
+  if(orders.length===0){body.innerHTML='<div class="orders-empty"><div class="orders-empty-emoji">🍽️</div><p>还没有点餐记录哦～</p><p style="font-size:.78rem;color:#ccc;margin-top:4px">快去邀请朋友点菜吧！</p></div>';return;}
+  body.innerHTML=[...orders].reverse().map(o=>`
+    <div class="order-card" id="oc-${o.id}" onclick="toggleOrder(${o.id})">
+      <div class="order-card-header">
+        <div class="order-meta"><span class="order-time">${o.time}</span><span class="order-person">👤 ${o.person}</span></div>
+        <span class="order-arrow" id="oa-${o.id}">▼</span>
+      </div>
+      <div class="order-dish-row">${o.items.map(i=>`<span class="order-dish-tag">${isImg(i.emoji)?'🍽️':i.emoji} ${i.name}${i.count>1?`<span class="order-dish-count">×${i.count}</span>`:''}</span>`).join('')}</div>
+      <div class="order-detail hidden" id="od-${o.id}">
+        <div class="order-detail-section"><span class="order-detail-label">📝 点餐明细</span>
+          <div class="order-detail-list">${o.items.map(i=>`<div class="order-detail-item"><span>${isImg(i.emoji)?'🍽️':i.emoji} ${i.name}</span><span class="order-detail-count">×${i.count}</span></div>`).join('')}</div>
+        </div>
+        <div class="order-restrict-row"><span class="order-restrict-label">🚫 忌口：</span><span class="order-restrict-val">${o.restrictions}</span></div>
+      </div>
+    </div>`).join('');
+}
+function toggleOrder(id){
+  const detail=document.getElementById('od-'+id);
+  const arrow=document.getElementById('oa-'+id);
+  const card=document.getElementById('oc-'+id);
+  const isOpen=!detail.classList.contains('hidden');
+  detail.classList.toggle('hidden',isOpen);
+  arrow.textContent=isOpen?'▼':'▲';
+  card.classList.toggle('expanded',!isOpen);
+}
+
+// ── 管理 ──
+function renderManage(){
+  document.getElementById('manage-body').innerHTML=CATS.map(cat=>{
+    const list=dishes.filter(d=>d.cat===cat);
+    return `<div class="manage-section">
+      <div class="manage-cat-title">${CATE[cat]} ${cat}<span class="cat-count">${list.length} 道</span></div>
+      ${list.length===0?'<div class="empty-hint">暂无菜品</div>':
+        '<div class="manage-list">'+list.map(d=>`
+          <div class="manage-item">
+            <span class="m-emoji">${isImg(d.e)?`<img src="${d.e}" style="width:26px;height:26px;border-radius:6px;object-fit:cover">`:d.e}</span>
+            <span class="m-name">${d.name}</span>
+            <span class="m-spice">${d.sp===0?'<span style="color:#ccc">不辣</span>':SP[d.sp]}</span>
+            <div class="m-actions">
+              <button class="edit-btn" onclick="openEditModal(${d.id})">编辑</button>
+              <button class="del-btn" onclick="delDish(${d.id})">删除</button>
+            </div></div>`).join('')+'</div>'}
+    </div>`;
+  }).join('');
+}
+function delDish(id){if(confirm('确认删除？')){dishes=dishes.filter(d=>d.id!==id);renderManage();}}
+function openAddModal(){
+  editingId=null;fCat='荤菜';fSp=0;imgUrl='';
+  document.getElementById('modal-title').textContent='🍳 添加新菜品';
+  document.getElementById('inp-name').value='';document.getElementById('inp-emoji').value='';
+  document.querySelector('.upload-area').innerHTML='<span class="upload-icon">📷</span><span>点击上传图片</span>';
+  document.getElementById('save-btn').textContent='添加菜品';
+  renderChips();document.getElementById('modal').classList.remove('hidden');checkSave();
+}
+function openEditModal(id){
+  const d=dishes.find(x=>x.id===id);editingId=id;fCat=d.cat;fSp=d.sp;imgUrl=isImg(d.e)?d.e:'';
+  document.getElementById('modal-title').textContent='✏️ 修改菜品';
+  document.getElementById('inp-name').value=d.name;
+  document.getElementById('inp-emoji').value=isImg(d.e)?'':d.e;
+  document.querySelector('.upload-area').innerHTML=isImg(d.e)?`<img src="${d.e}" style="width:100%;height:100%;object-fit:cover;border-radius:10px">`:'<span class="upload-icon">📷</span><span>点击上传图片</span>';
+  document.getElementById('save-btn').textContent='保存修改';
+  renderChips();document.getElementById('modal').classList.remove('hidden');checkSave();
+}
+function closeModal(){document.getElementById('modal').classList.add('hidden');}
+function renderChips(){
+  document.getElementById('cat-chips').innerHTML=CATS.map(c=>`<button class="chip${c===fCat?' active':''}" onclick="fCat='${c}';renderChips()">${CATE[c]} ${c}</button>`).join('');
+  document.getElementById('spice-chips').innerHTML=[0,1,2,3].map(l=>`<button class="chip${l===fSp?' active':''}" onclick="fSp=${l};renderChips()">${SP[l]}</button>`).join('');
+}
+function handleImg(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{imgUrl=ev.target.result;document.querySelector('.upload-area').innerHTML=`<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:10px">`;};r.readAsDataURL(f);}
+function updateEmoji(){imgUrl='';}
+function checkSave(){document.getElementById('save-btn').disabled=!document.getElementById('inp-name').value.trim();}
+function saveDish(){
+  const name=document.getElementById('inp-name').value.trim();if(!name)return;
+  const emoji=imgUrl||document.getElementById('inp-emoji').value||'🍽️';
+  if(editingId!==null)dishes=dishes.map(d=>d.id===editingId?{...d,name,cat:fCat,sp:fSp,e:emoji}:d);
+  else dishes.push({id:nextId++,name,cat:fCat,sp:fSp,e:emoji});
+  closeModal();renderManage();
+}
+// 初始化
+renderMenu();renderManage();
+</script>
+</body>
+</html>
